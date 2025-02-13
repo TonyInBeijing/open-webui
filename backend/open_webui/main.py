@@ -673,6 +673,8 @@ app.state.config.AUTOCOMPLETE_GENERATION_INPUT_MAX_LENGTH = (
 
 app.state.MODELS = {}
 
+WEBUI_DEV_ORIGIN = "http://192.168.31.141:5173";
+
 
 class RedirectMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -736,7 +738,7 @@ async def inspect_websocket(request: Request, call_next):
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ALLOW_ORIGIN,
+    allow_origins=[WEBUI_DEV_ORIGIN],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -1190,8 +1192,15 @@ async def healthcheck_with_db():
     Session.execute(text("SELECT 1;")).all()
     return {"status": True}
 
+static_app = StaticFiles(directory=STATIC_DIR)
+static_app = CORSMiddleware(
+    static_app,
+    allow_origins=[WEBUI_DEV_ORIGIN],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],)
 
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+app.mount("/static", static_app, name="static")
 app.mount("/cache", StaticFiles(directory=CACHE_DIR), name="cache")
 
 
